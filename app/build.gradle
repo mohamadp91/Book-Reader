@@ -2,13 +2,9 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 
-    // firebase plugin
-    id 'com.google.gms.google-services'
-
     // hilt plugins
     id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
-
 }
 
 android {
@@ -30,6 +26,7 @@ android {
 
     buildTypes {
         release {
+            buildConfigField "String", "SUPABASE_KEY", "\"${getProperty("SUPABASE_KEY")}\""
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -56,13 +53,14 @@ android {
 
 dependencies {
 
-    // firebase dependency
-    implementation platform('com.google.firebase:firebase-bom:31.5.0')
-    implementation 'com.google.firebase:firebase-auth-ktx'
-    implementation 'com.google.firebase:firebase-firestore-ktx'
+    // supabase
+    implementation("io.github.jan-tennert.supabase:gotrue-kt:0.9.5")
+    implementation("io.ktor:ktor-client-core:2.3.0")
+    implementation("io.ktor:ktor-client-cio:2.3.0")
 
     // hilt dependency
     implementation "com.google.dagger:hilt-android:$hilt_version"
+    implementation files('/home/mohamadp91/Downloads/kotlin-compiler-30.4.2.jar')
     kapt "com.google.dagger:dagger-compiler:$hilt_version"
     kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
     kapt "androidx.hilt:hilt-compiler:1.0.0"

@@ -14,8 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -43,6 +42,10 @@ fun CustomTextFiled(
     }
     isFormValidState.value = isTextFieldErrorState == false
 
+    var isFieldTouched by remember {
+        mutableStateOf(false)
+    }
+
     Column {
         OutlinedTextField(
             value = textState.value,
@@ -51,7 +54,10 @@ fun CustomTextFiled(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 3.dp),
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 3.dp)
+                .onFocusChanged {
+                    isFieldTouched = it.hasFocus
+                },
             textStyle = TextStyle(
                 MaterialTheme.colorScheme.secondary,
                 fontWeight = FontWeight.SemiBold,
@@ -73,9 +79,9 @@ fun CustomTextFiled(
                 imeAction = action
             ),
             singleLine = true,
-            isError = isTextFieldErrorState,
+            isError = isTextFieldErrorState && isFieldTouched,
         )
-        if (isTextFieldErrorState)
+        if (isTextFieldErrorState && isFieldTouched)
             ErrorText(title = "email")
     }
 }
@@ -90,11 +96,14 @@ fun PasswordTextFiled(
     var isPasswordVisible by rememberSaveable {
         mutableStateOf(false)
     }
-    val passwordFocusRequester = FocusRequester.Default
     val isPasswordHasError = remember(passwordState.value) {
         passwordState.value.trim().length < 6
     }
     isFormValidState.value = isPasswordHasError == false
+
+    var isFieldTouched by remember {
+        mutableStateOf(false)
+    }
 
     Column(
         horizontalAlignment = Alignment.Start,
@@ -108,7 +117,9 @@ fun PasswordTextFiled(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 3.dp)
-                .focusRequester(passwordFocusRequester),
+                .onFocusChanged {
+                    isFieldTouched = it.hasFocus
+                },
             textStyle = TextStyle(
                 MaterialTheme.colorScheme.secondary,
                 fontWeight = FontWeight.SemiBold,
@@ -144,9 +155,9 @@ fun PasswordTextFiled(
                 }
             },
             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            isError = isPasswordHasError,
+            isError = isPasswordHasError && isFieldTouched,
         )
-        if (isPasswordHasError)
+        if (isPasswordHasError && isFieldTouched)
             ErrorText(title = "password")
     }
 }

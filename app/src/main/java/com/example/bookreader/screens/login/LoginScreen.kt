@@ -1,6 +1,6 @@
 package com.example.bookreader.screens.login
 
-import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -11,21 +11,26 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.bookreader.components.ErrorDialog
+import com.example.bookreader.data.ResultState
+import com.example.bookreader.navigation.ReaderScreens
 import com.example.bookreader.widgets.CustomTextFiled
 import com.example.bookreader.widgets.PasswordTextFiled
 
-@Preview(showBackground = true)
 @Composable
-fun LoginScreen(navController: NavController? = null) {
+fun LoginScreen(
+    navController: NavController,
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -50,12 +55,58 @@ fun LoginScreen(navController: NavController? = null) {
                     ),
                     modifier = Modifier.padding(top = 18.dp)
                 )
+                Spacer(modifier = Modifier.height(40.dp))
                 var showLoginScreenState by rememberSaveable {
                     mutableStateOf(false)
                 }
-                Spacer(modifier = Modifier.height(50.dp))
-                UserForm(isLoginScreen = showLoginScreenState) { e, pwd ->
-                    Log.i("tag", "email is $e pass is $pwd")
+                val loginResultState = viewModel.result.collectAsState().value
+                val userSignedUp = rememberSaveable() {
+                    mutableStateOf(false)
+                }
+                Text(
+                    if (showLoginScreenState) "Login" else "Sign Up",
+                    style = TextStyle(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 25.sp,
+                        textAlign = TextAlign.Center,
+                    ),
+                    modifier = Modifier.padding(top = 18.dp)
+                )
+                UserForm(
+                    isLoginScreen = showLoginScreenState,
+                    onSubmit = { e, pwd ->
+                        if (showLoginScreenState)
+                            viewModel.signInEmailWithPassword(e, pwd)
+                        else
+                            viewModel.createUserWithEmailAndPassword(e, pwd) {
+                                showLoginScreenState = true
+                                userSignedUp.value = true
+                            }
+                    }
+                )
+                ShowSignedUpMessage(showMessage = userSignedUp)
+
+                when (loginResultState) {
+                    is ResultState.Success -> {
+                        if (showLoginScreenState)
+                            navController.navigate(ReaderScreens.HomeScreen.name)
+                    }
+                    is ResultState.Error -> {
+                        var dialogState by rememberSaveable {
+                            mutableStateOf(true)
+                        }
+                        if (dialogState)
+                            ErrorDialog(error = loginResultState.exception.message) {
+                                dialogState = false
+                            }
+                    }
+                    is ResultState.Loading -> {
+                        CircularProgressIndicator()
+                    }
+                    else -> {
+
+                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -81,11 +132,18 @@ fun LoginScreen(navController: NavController? = null) {
     }
 }
 
+@Composable
+fun ShowSignedUpMessage(showMessage: MutableState<Boolean>) {
+    val context = LocalContext.current
+    if (showMessage.value)
+        Toast.makeText(context, "Please verify your email", Toast.LENGTH_LONG).show()
+}
+
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun UserForm(
     isLoginScreen: Boolean,
-    onSubmit: (email: String, password: String) -> Unit
+    onSubmit: (email: String, password: String) -> Unit,
 ) {
     val emailState = rememberSaveable {
         mutableStateOf("")
@@ -93,7 +151,7 @@ fun UserForm(
     val passwordState = rememberSaveable {
         mutableStateOf("")
     }
-    var isFormValid = remember(emailState.value, passwordState.value) {
+    val isFormValid = remember(emailState.value, passwordState.value) {
         mutableStateOf(false)
     }
     val keyboardController = LocalSoftwareKeyboardController.current
