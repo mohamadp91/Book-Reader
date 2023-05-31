@@ -1,14 +1,29 @@
 package com.example.bookreader.screens.login
 
-import androidx.lifecycle.ViewModel
+import android.annotation.SuppressLint
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bookreader.R
 import com.example.bookreader.data.ResultState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.jan.supabase.exceptions.RestException
+import io.github.jan.supabase.gotrue.GoTrue
+import io.github.jan.supabase.gotrue.providers.builtin.Email
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LoginViewModel() : ViewModel() {
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val goTrue: GoTrue,
+    private val application: Application
+) :
+    AndroidViewModel(application = application) {
 
+    @SuppressLint("StaticFieldLeak")
+    private val context = application.applicationContext
     private var _result: MutableStateFlow<ResultState<*>> = MutableStateFlow(ResultState.IDLE)
     val result get() = _result.asStateFlow()
 
@@ -18,10 +33,13 @@ class LoginViewModel() : ViewModel() {
     ) = viewModelScope.launch {
         try {
             _result.value = ResultState.Loading
-            // sign in
+            val response = goTrue.loginWith(Email) {
+                this.email = email
+                this.password = password
+            }
+            _result.value = ResultState.Success(response)
         } catch (ex: Exception) {
             _result.value = ResultState.Error(ex)
-            // exception
         }
     }
 
@@ -32,40 +50,25 @@ class LoginViewModel() : ViewModel() {
     ) = viewModelScope.launch {
         try {
             _result.value = ResultState.Loading
-//           sign up
-
-//            if email is verified
-//            saveUserInDb
-//                } else {
-//            Log.e("TAG", "createUserWithEmail:failure  " + task.exception)
-//            _result.value =
-//                ResultState.Error(java.lang.Exception("An error occurred, try again later"))
+            goTrue.signUpWith(provider = Email) {
+                this.email = email
+                this.password = password
+            }
+            onSignedUp.invoke()
+            _result.value = ResultState.IDLE
         } catch (ex: Exception) {
-            _result.value = ResultState.Error(ex)
+            when (ex) {
+                is RestException -> _result.value =
+                    ResultState.Error(java.lang.Exception("Your Email is invalid"))
+                else -> _result.value =
+                    ResultState.Error(java.lang.Exception(context.getString(R.string.no_connection_string)))
+            }
         }
     }
 
-    private fun saveUserInDb(displayName: String?) {
-        val uid = 0
-        val user = mapOf<String, Any>(
-            "user_id" to uid,
-            "display_name" to (displayName ?: "Anonymous"),
-        )
-//        saveInDb
-    }
-
-    private fun onSignedUp() {
-//        if (currentUser.isEmailVerified) {
-        //        saveUserInDb()
-//            val db =
-//            db.collection("users").add(user).addOnCompleteListener() { task ->
-//                if (task.isSuccessful) {
-//                    _result.value = ResultState.Success<String>(uid)
-//                } else {
-//                    _result.value =
-//                        ResultState.Error(java.lang.Exception("An error occurred, try again later"))
-//                }
-//            }
-//        }
+    fun logout() {
+        viewModelScope.launch {
+            goTrue.invalidateSession()
+        }
     }
 }

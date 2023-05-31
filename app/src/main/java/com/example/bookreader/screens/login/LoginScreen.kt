@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.bookreader.components.ErrorDialog
 import com.example.bookreader.data.ResultState
@@ -29,7 +30,7 @@ import com.example.bookreader.widgets.PasswordTextFiled
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    viewModel: LoginViewModel = hiltViewModel(),
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),

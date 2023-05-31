@@ -21,12 +21,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.bookreader.navigation.ReaderScreens
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(navController: NavController) {
+fun SplashScreen(
+    navController: NavController, splashViewModel: SplashViewModel = hiltViewModel()
+) {
     val scale = remember {
         Animatable(0f)
     }
@@ -36,7 +39,11 @@ fun SplashScreen(navController: NavController) {
             OvershootInterpolator(8f).getInterpolation(it)
         }))
         delay(3000L)
-        navController.navigate(ReaderScreens.LoginScreen.name)
+        if (splashViewModel.checkIfUserLoggedIn()) {
+            navController.navigate(ReaderScreens.HomeScreen.name)
+        } else {
+            navController.navigate(ReaderScreens.LoginScreen.name)
+        }
     })
 
     Column(
@@ -51,16 +58,14 @@ fun SplashScreen(navController: NavController) {
                 .size(350.dp)
                 .padding(20.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    CircleShape
+                    color = MaterialTheme.colorScheme.primaryContainer, CircleShape
                 )
                 .border(BorderStroke(2.dp, Color.DarkGray), shape = CircleShape),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Book Reader",
-                style = TextStyle(
+                text = "Book Reader", style = TextStyle(
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Bold,

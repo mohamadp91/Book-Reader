@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Book Reader</string>
+    <string name="no_connection_string">We\'re sorry, but it seems that your internet connection is currently unavailable. Please check your network connection and try again later.</string>
 </resources>
