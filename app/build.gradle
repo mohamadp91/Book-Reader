@@ -5,6 +5,9 @@ plugins {
     // hilt plugins
     id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
+
+    id 'org.jetbrains.kotlin.plugin.serialization'
+
 }
 
 android {
@@ -57,6 +60,8 @@ android {
 dependencies {
 
     // supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:0.9.5"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:gotrue-kt:0.9.5")
     implementation("io.ktor:ktor-client-core:2.3.0")
     implementation("io.ktor:ktor-client-cio:2.3.0")
