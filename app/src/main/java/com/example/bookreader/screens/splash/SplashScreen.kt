@@ -12,7 +12,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.bookreader.components.ErrorDialog
 import com.example.bookreader.data.ResultState
 import com.example.bookreader.data.UserDatabaseStates
 import com.example.bookreader.navigation.ReaderScreens
@@ -38,51 +38,57 @@ fun SplashScreen(
     val scale = remember {
         Animatable(0f)
     }
-    val userState = splashViewModel.postgrestResult.collectAsState().value
+    SplashScreenUi(scale.value)
 
-    LaunchedEffect(key1 = true, block = {
-        scale.animateTo(targetValue = 0.9f, animationSpec = tween(800, easing = {
-            OvershootInterpolator(8f).getInterpolation(it)
-        }))
-        delay(3000L)
-        when (userState) {
-            is ResultState.Success -> {
-                if (userState.data == UserDatabaseStates.SavedUser) {
-                    navController.navigateToDestinationAndRemovePrevious(
-                        ReaderScreens.HomeScreen.name,
-                        ReaderScreens.SplashScreen.name
-                    )
-                } else {
-                    navController.navigateToDestinationAndRemovePrevious(
-                        ReaderScreens.UserScreen.name, ReaderScreens.SplashScreen.name
-                    )
+    val userState = splashViewModel.userSaveState.value
+    val destination =
+        if (userState is ResultState.Success) {
+            when (userState.data) {
+                UserDatabaseStates.SavedUser -> ReaderScreens.HomeScreen
+                UserDatabaseStates.NotSavedUser -> ReaderScreens.UserScreen
+                UserDatabaseStates.UnAuthenticated -> ReaderScreens.LoginScreen
+                UserDatabaseStates.SavedUserRemotely -> {
+                    splashViewModel.fetchUserRemote()
+                    null
                 }
+                else -> null
             }
-            is ResultState.Loading -> {
-                delay(1000)
+        } else if (userState is ResultState.Error) {
+            ErrorDialog(
+                error = userState.exception.message,
+                buttonTitle = "Retry"
+            ) {
+                splashViewModel.checkUserState()
             }
-            else -> {}
-        }
-        val userAuth = splashViewModel.getCurrentUserAuth()
-        if (userAuth != null) {
-            val userId = userAuth.id
-            // TODO: if user saved in room db
-//            navController.navigate(ReaderScreens.HomeScreen.name)
-
-            // TODO: else fetch user remote
-            splashViewModel.fetchUserRemoteByUserId(userId)
+            null
         } else {
+            null
+        }
+
+    LaunchedEffect(key1 = destination) {
+        if (destination != null) {
             navController.navigateToDestinationAndRemovePrevious(
-                ReaderScreens.LoginScreen.name,
+                destination.name,
                 ReaderScreens.SplashScreen.name
             )
         }
-    })
+    }
 
+    LaunchedEffect(key1 = true) {
+        scale.animateTo(targetValue = 0.9f, animationSpec = tween(800, easing = {
+            OvershootInterpolator(8f).getInterpolation(it)
+        }))
+        splashViewModel.checkUserState()
+        delay(3000)
+    }
+}
+
+@Composable
+fun SplashScreenUi(scale: Float) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .scale(scale.value),
+            .scale(scale),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

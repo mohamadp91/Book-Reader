@@ -10,9 +10,7 @@ import com.example.bookreader.models.UserModel
 import com.example.bookreader.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.gotrue.user.UserInfo
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,19 +28,23 @@ class UserViewModel @Inject constructor(
     fun saveUser(user: UserModel) {
         postgrestResult.value = ResultState.Loading
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                try {
-                    repository.saveUser(user)
-                    postgrestResult.value = ResultState.Success(UserDatabaseStates.SavedUser)
-                } catch (e: Exception) {
-                    postgrestResult.value = ResultState.Error(e)
-                }
+            try {
+                repository.saveUser(user)
+                postgrestResult.value = ResultState.Success(UserDatabaseStates.SavedUser)
+            } catch (e: Exception) {
+                postgrestResult.value = ResultState.Error(e)
             }
         }
     }
 
     fun invalidateSession() {
-        repository.invalidateSession()
+        viewModelScope.launch {
+            try {
+                repository.invalidateSession()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
 }
