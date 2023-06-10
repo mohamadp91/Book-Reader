@@ -46,7 +46,7 @@ class SplashViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     // user id is non-null because when this fun is invoked, user UserInfo is not null
-                    val isUserExists = userRepository.getUserByIdLocally(userId!!)
+                    val isUserExists = userRepository.isUserSaved(userId!!)
                     if (isUserExists)
                         userSaveState.value = ResultState.Success(UserDatabaseStates.SavedUser)
                     else

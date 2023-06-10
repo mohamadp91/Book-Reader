@@ -1,20 +1,22 @@
 package com.example.bookreader.repository
 
 import android.util.Log
+import com.example.bookreader.data.db.UserDao
 import com.example.bookreader.models.UserModel
-import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.gotrue.GoTrue
 import io.github.jan.supabase.gotrue.user.UserInfo
 import io.github.jan.supabase.postgrest.Postgrest
-import io.ktor.client.request.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class UserRepository @Inject constructor(
     private val goTrue: GoTrue,
-    private val postgrest: Postgrest
+    private val postgrest: Postgrest,
+    private val userDao: UserDao
 ) {
+
+    private val tag = "UserRepository"
     fun getCurrentUserAuth(): UserInfo? =
         goTrue.currentSessionOrNull()?.user
 
@@ -25,12 +27,22 @@ class UserRepository @Inject constructor(
 
     private suspend fun saveUserRemote(user: UserModel) {
         withContext(Dispatchers.IO) {
-            postgrest["users"].insert(user)
+            try {
+                postgrest["users"].insert(user)
+            } catch (e: Exception) {
+                Log.e(tag, e.message.toString())
+            }
         }
     }
 
     suspend fun saveUserLocally(user: UserModel) {
-        // TODO: save user in room db
+        withContext(Dispatchers.IO) {
+            try {
+                userDao.saveUser(user)
+            } catch (e: Exception) {
+                Log.e(tag, e.message.toString())
+            }
+        }
     }
 
     suspend fun fetchUserRemoteByUserId(userId: String): UserModel? =
@@ -50,9 +62,12 @@ class UserRepository @Inject constructor(
         goTrue.invalidateSession()
     }
 
-    suspend fun getUserByIdLocally(userId: String): Boolean {
-        // TODO:
-        return false
+    fun getUserByIdLocally() = userDao.getUsers()
+
+    suspend fun isUserSaved(userId: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            userDao.isUserSaved(userId) > 0
+        }
     }
 }
 
