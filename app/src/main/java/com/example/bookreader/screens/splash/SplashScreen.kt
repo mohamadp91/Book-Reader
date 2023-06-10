@@ -23,33 +23,72 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.bookreader.components.ErrorDialog
+import com.example.bookreader.data.ResultState
+import com.example.bookreader.data.UserDatabaseStates
 import com.example.bookreader.navigation.ReaderScreens
+import com.example.bookreader.util.navigateToDestinationAndRemovePrevious
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    navController: NavController, splashViewModel: SplashViewModel = hiltViewModel()
+    navController: NavController,
+    splashViewModel: SplashViewModel = hiltViewModel()
 ) {
     val scale = remember {
         Animatable(0f)
     }
+    SplashScreenUi(scale.value)
 
-    LaunchedEffect(key1 = true, block = {
+    val userState = splashViewModel.userSaveState.value
+    val destination =
+        if (userState is ResultState.Success) {
+            when (userState.data) {
+                UserDatabaseStates.SavedUser -> ReaderScreens.HomeScreen
+                UserDatabaseStates.NotSavedUser -> ReaderScreens.UserScreen
+                UserDatabaseStates.UnAuthenticated -> ReaderScreens.LoginScreen
+                UserDatabaseStates.SavedUserRemotely -> {
+                    splashViewModel.fetchUserRemote()
+                    null
+                }
+                else -> null
+            }
+        } else if (userState is ResultState.Error) {
+            ErrorDialog(
+                error = userState.exception.message,
+                buttonTitle = "Retry"
+            ) {
+                splashViewModel.checkUserState()
+            }
+            null
+        } else {
+            null
+        }
+
+    LaunchedEffect(key1 = destination) {
+        if (destination != null) {
+            navController.navigateToDestinationAndRemovePrevious(
+                destination.name,
+                ReaderScreens.SplashScreen.name
+            )
+        }
+    }
+
+    LaunchedEffect(key1 = true) {
         scale.animateTo(targetValue = 0.9f, animationSpec = tween(800, easing = {
             OvershootInterpolator(8f).getInterpolation(it)
         }))
-        delay(3000L)
-        if (splashViewModel.checkIfUserLoggedIn()) {
-            navController.navigate(ReaderScreens.HomeScreen.name)
-        } else {
-            navController.navigate(ReaderScreens.LoginScreen.name)
-        }
-    })
+        splashViewModel.checkUserState()
+        delay(3000)
+    }
+}
 
+@Composable
+fun SplashScreenUi(scale: Float) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .scale(scale.value),
+            .scale(scale),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

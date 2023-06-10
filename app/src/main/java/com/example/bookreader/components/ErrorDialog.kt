@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ErrorDialog(
     error: String?,
+    buttonTitle: String = "close",
     onDismissRequest: () -> Unit
 ) {
     androidx.compose.material3.AlertDialog(onDismissRequest = {},
@@ -25,7 +26,7 @@ fun ErrorDialog(
         confirmButton = {},
         dismissButton = {
             Button(onClick = { onDismissRequest() }) {
-                Text(text = "Close")
+                Text(text = buttonTitle)
             }
         },
         text = {

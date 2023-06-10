@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -35,10 +37,11 @@ fun CustomTextFiled(
     label: String,
     action: ImeAction = ImeAction.Next,
     keyboardType: KeyboardType,
-    isFormValidState: MutableState<Boolean>,
+    isFormValidState: MutableState<Boolean> = mutableStateOf(true),
+    min: Int = 2
 ) {
     val isTextFieldErrorState = remember(textState.value) {
-        textState.value.trim().length < 6
+        textState.value.trim().length < min
     }
     isFormValidState.value = isTextFieldErrorState == false
 
@@ -55,8 +58,9 @@ fun CustomTextFiled(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 3.dp)
+                .focusRequester(FocusRequester())
                 .onFocusChanged {
-                    isFieldTouched = it.hasFocus
+                    isFieldTouched = it.isFocused
                 },
             textStyle = TextStyle(
                 MaterialTheme.colorScheme.secondary,
@@ -80,9 +84,12 @@ fun CustomTextFiled(
             ),
             singleLine = true,
             isError = isTextFieldErrorState && isFieldTouched,
+            keyboardActions = KeyboardActions(onNext = {
+                if (isFormValidState.value) return@KeyboardActions
+            })
         )
         if (isTextFieldErrorState && isFieldTouched)
-            ErrorText(title = "email")
+            ErrorText(title = label)
     }
 }
 

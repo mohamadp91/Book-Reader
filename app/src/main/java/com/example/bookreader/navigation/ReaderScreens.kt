@@ -3,6 +3,7 @@ package com.example.bookreader.navigation
 enum class ReaderScreens {
     SplashScreen,
     HomeScreen,
+    UserScreen,
     SearchScreen,
     LoginScreen,
     CreateAccountScreen,

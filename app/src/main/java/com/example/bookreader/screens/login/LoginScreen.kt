@@ -24,6 +24,7 @@ import androidx.navigation.NavController
 import com.example.bookreader.components.ErrorDialog
 import com.example.bookreader.data.ResultState
 import com.example.bookreader.navigation.ReaderScreens
+import com.example.bookreader.util.navigateToDestinationAndRemovePrevious
 import com.example.bookreader.widgets.CustomTextFiled
 import com.example.bookreader.widgets.PasswordTextFiled
 
@@ -41,101 +42,124 @@ fun LoginScreen(
                 .padding(16.dp)
                 .wrapContentSize()
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    "Book Reader",
-                    style = TextStyle(
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 35.sp,
-                        textAlign = TextAlign.Center,
-                    ),
-                    modifier = Modifier.padding(top = 18.dp)
-                )
-                Spacer(modifier = Modifier.height(40.dp))
-                var showLoginScreenState by rememberSaveable {
-                    mutableStateOf(false)
-                }
-                val loginResultState = viewModel.result.collectAsState().value
-                val userSignedUp = rememberSaveable() {
-                    mutableStateOf(false)
-                }
-                Text(
-                    if (showLoginScreenState) "Login" else "Sign Up",
-                    style = TextStyle(
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
-                        textAlign = TextAlign.Center,
-                    ),
-                    modifier = Modifier.padding(top = 18.dp)
-                )
-                UserForm(
-                    isLoginScreen = showLoginScreenState,
-                    onSubmit = { e, pwd ->
-                        if (showLoginScreenState)
-                            viewModel.signInEmailWithPassword(e, pwd)
-                        else
-                            viewModel.createUserWithEmailAndPassword(e, pwd) {
-                                showLoginScreenState = true
-                                userSignedUp.value = true
-                            }
-                    }
-                )
-                ShowSignedUpMessage(showMessage = userSignedUp)
-
-                when (loginResultState) {
-                    is ResultState.Success -> {
-                        if (showLoginScreenState)
-                            navController.navigate(ReaderScreens.HomeScreen.name)
-                    }
-                    is ResultState.Error -> {
-                        var dialogState by rememberSaveable {
-                            mutableStateOf(true)
-                        }
-                        if (dialogState)
-                            ErrorDialog(error = loginResultState.exception.message) {
-                                dialogState = false
-                            }
-                    }
-                    is ResultState.Loading -> {
-                        CircularProgressIndicator()
-                    }
-                    else -> {
-
-                    }
-                }
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        if (showLoginScreenState) "New User?" else "Already have an account?",
-                    )
-                    Text(
-                        text = if (showLoginScreenState) "Sign up" else "Login",
-                        color = MaterialTheme.colorScheme.secondary,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        modifier = Modifier
-                            .padding(start = 3.dp)
-                            .clickable {
-                                showLoginScreenState = !showLoginScreenState
-                            }
-                    )
-                }
-            }
+            ColumnContent(navController = navController, viewModel = viewModel)
         }
     }
 }
 
 @Composable
-fun ShowSignedUpMessage(showMessage: MutableState<Boolean>) {
+fun ColumnContent(navController: NavController, viewModel: LoginViewModel) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+        modifier = Modifier.padding(16.dp)
+    ) {
+        TextContent()
+        UserFormContent(navController = navController, viewModel = viewModel)
+    }
+}
+
+@Composable
+fun TextContent() {
+    Text(
+        "Book Reader",
+        style = TextStyle(
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+            fontSize = 35.sp,
+            textAlign = TextAlign.Center,
+        ),
+        modifier = Modifier.padding(top = 18.dp)
+    )
+    Spacer(modifier = Modifier.height(40.dp))
+}
+
+@Composable
+fun UserFormContent(navController: NavController, viewModel: LoginViewModel) {
+    val userSignedUp = rememberSaveable { mutableStateOf(false) }
+    var showLoginScreenState by rememberSaveable { mutableStateOf(false) }
+
+    Text(
+        if (showLoginScreenState) "Login" else "Sign Up",
+        style = TextStyle(
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+            fontSize = 25.sp,
+            textAlign = TextAlign.Center,
+        ),
+        modifier = Modifier.padding(top = 18.dp)
+    )
+
+    UserForm(
+        isLoginScreen = showLoginScreenState,
+        onSubmit = { email, password ->
+            if (showLoginScreenState)
+                viewModel.signInEmailWithPassword(email, password)
+            else
+                viewModel.createUserWithEmailAndPassword(email, password) {
+                    showLoginScreenState = true
+                    userSignedUp.value = true
+                }
+        }
+    )
+
+    ShowSignedUpMessage(showMessage = userSignedUp)
+
+    RowContent(showLoginScreenState = showLoginScreenState) {
+        showLoginScreenState = !showLoginScreenState
+    }
+
+    val loginResultState = viewModel.result
+
+    when (loginResultState) {
+        is ResultState.Success -> {
+            LaunchedEffect(key1 = true, block = {
+                navController.navigateToDestinationAndRemovePrevious(
+                    ReaderScreens.UserScreen.name,
+                    ReaderScreens.LoginScreen.name
+                )
+            })
+        }
+        is ResultState.Error -> {
+            var dialogState by rememberSaveable { mutableStateOf(true) }
+            if (dialogState)
+                ErrorDialog(error = loginResultState.exception.message) {
+                    dialogState = false
+                }
+        }
+        is ResultState.Loading -> {
+            CircularProgressIndicator()
+        }
+        is ResultState.IDLE -> {
+        }
+    }
+}
+
+@Composable
+fun RowContent(showLoginScreenState: Boolean, onClick: () -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            if (showLoginScreenState) "New User?" else "Already have an account?",
+        )
+        Text(
+            text = if (showLoginScreenState) "Sign up" else "Login",
+            color = MaterialTheme.colorScheme.secondary,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp,
+            modifier = Modifier
+                .padding(start = 3.dp)
+                .clickable { onClick.invoke() }
+        )
+    }
+}
+
+@Composable
+fun ShowSignedUpMessage(showMessage : MutableState<Boolean>) {
     val context = LocalContext.current
+
     if (showMessage.value)
         Toast.makeText(context, "Please verify your email", Toast.LENGTH_LONG).show()
 }
@@ -146,34 +170,27 @@ fun UserForm(
     isLoginScreen: Boolean,
     onSubmit: (email: String, password: String) -> Unit,
 ) {
-    val emailState = rememberSaveable {
-        mutableStateOf("")
-    }
-    val passwordState = rememberSaveable {
-        mutableStateOf("")
-    }
-    val isFormValid = remember(emailState.value, passwordState.value) {
-        mutableStateOf(false)
-    }
+    val emailState = rememberSaveable { mutableStateOf("") }
+    val passwordState = rememberSaveable { mutableStateOf("") }
+    val isFormValid = remember(emailState.value, passwordState.value) { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
-
 
     CustomTextFiled(
         emailState,
         isFormValidState = isFormValid,
         icon = Icons.Default.Email,
         label = "Email",
-        keyboardType = KeyboardType.Email
+        keyboardType = KeyboardType.Email,
+        min = 6
     )
     PasswordTextFiled(
         isFormValidState = isFormValid,
         passwordState = passwordState,
         label = "Password"
     )
+
     if (!isLoginScreen) {
-        val verifyPasswordState = remember {
-            mutableStateOf("")
-        }
+        val verifyPasswordState = remember { mutableStateOf("") }
         val passwordVerified = remember(verifyPasswordState.value, passwordState.value) {
             verifyPasswordState.value == passwordState.value
         }
@@ -183,8 +200,10 @@ fun UserForm(
             passwordState = verifyPasswordState,
             label = "Verify Password"
         )
+
         isFormValid.value = isFormValid.value && passwordVerified
     }
+
     Button(
         onClick = {
             onSubmit.invoke(
@@ -207,4 +226,5 @@ fun UserForm(
         )
     }
 }
+
 

@@ -1,7 +1,10 @@
 package com.example.bookreader.screens.login
 
-import android.annotation.SuppressLint
 import android.app.Application
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookreader.R
@@ -10,9 +13,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.gotrue.GoTrue
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,24 +27,26 @@ class LoginViewModel @Inject constructor(
 ) :
     AndroidViewModel(application = application) {
 
-    @SuppressLint("StaticFieldLeak")
-    private val context = application.applicationContext
-    private var _result: MutableStateFlow<ResultState<*>> = MutableStateFlow(ResultState.IDLE)
-    val result get() = _result.asStateFlow()
+    var result by mutableStateOf<ResultState<*>>(ResultState.IDLE)
+    private set
 
     fun signInEmailWithPassword(
         email: String,
         password: String
-    ) = viewModelScope.launch {
-        try {
-            _result.value = ResultState.Loading
-            val response = goTrue.loginWith(Email) {
-                this.email = email
-                this.password = password
+    ) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    result = ResultState.Loading
+                    val response = goTrue.loginWith(Email) {
+                        this.email = email
+                        this.password = password
+                    }
+                    result = ResultState.Success(response)
+                } catch (ex: Exception) {
+                    result = ResultState.Error(ex)
+                }
             }
-            _result.value = ResultState.Success(response)
-        } catch (ex: Exception) {
-            _result.value = ResultState.Error(ex)
         }
     }
 
@@ -47,21 +54,24 @@ class LoginViewModel @Inject constructor(
         email: String,
         password: String,
         onSignedUp: () -> Unit
-    ) = viewModelScope.launch {
-        try {
-            _result.value = ResultState.Loading
-            goTrue.signUpWith(provider = Email) {
-                this.email = email
-                this.password = password
-            }
-            onSignedUp.invoke()
-            _result.value = ResultState.IDLE
-        } catch (ex: Exception) {
-            when (ex) {
-                is RestException -> _result.value =
-                    ResultState.Error(java.lang.Exception("Your Email is invalid"))
-                else -> _result.value =
-                    ResultState.Error(java.lang.Exception(context.getString(R.string.no_connection_string)))
+    ) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    result = ResultState.Loading
+                    goTrue.signUpWith(provider = Email) {
+                        this.email = email
+                        this.password = password
+                    }
+                    onSignedUp.invoke()
+                    result = ResultState.IDLE
+                } catch (ex: Exception) {
+                    val errorMessage = when (ex) {
+                        is RestException -> "Your Email is invalid"
+                        else -> application.getString(R.string.no_connection_string)
+                    }
+                    result = ResultState.Error(Exception(errorMessage))
+                }
             }
         }
     }
