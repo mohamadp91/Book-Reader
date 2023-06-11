@@ -66,9 +66,6 @@ fun UserScreen(
         }
     }
 
-    BackHandler(enabled = true) {
-        userViewModel.invalidateSession()
-    }
 }
 
 @Composable

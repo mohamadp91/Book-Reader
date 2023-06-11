@@ -1,14 +1,14 @@
 package com.example.bookreader.screens.home
 
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.bookreader.models.UserModel
+import com.example.bookreader.components.DrawerMenuContent
+import com.example.bookreader.components.ReaderTopBar
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -17,11 +17,39 @@ fun HomeScreen(
 ) {
     val user = homeViewModel.user.collectAsState().value
 
-    Scaffold() {
-        if(user != null)
-        Text("welcome to home ${user.firstName}")
-        else {
-            Text("welcome to home")
-        }
+    val drawerMenuState = rememberDrawerState(DrawerValue.Closed)
+    ModalNavigationDrawer(
+        drawerContent = {
+            if (user != null)
+                DrawerMenuContent(user = user, navController = navController)
+        },
+        drawerState = drawerMenuState
+    ) {
+        HomeUiContent(navController = navController, drawerMenuState)
+    }
+
+}
+
+@Composable
+fun HomeUiContent(
+    navController: NavController,
+    drawerMenuState: DrawerState
+) {
+    val scope = rememberCoroutineScope()
+
+    Scaffold(
+        topBar = {
+            ReaderTopBar(
+                navController = navController,
+                isMainScreen = true
+            ) {
+                scope.launch {
+                    drawerMenuState.apply {
+                        if (isClosed) open() else close()
+                    }
+                }
+            }
+        },
+    ) {
     }
 }
