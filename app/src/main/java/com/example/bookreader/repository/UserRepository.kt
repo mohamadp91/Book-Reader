@@ -64,9 +64,9 @@ class UserRepository @Inject constructor(
 
     fun getUserByIdLocally() = userDao.getUsers()
 
-    suspend fun isUserSaved(userId: String): Boolean {
+    suspend fun isUserSaved(): Boolean {
         return withContext(Dispatchers.IO) {
-            userDao.isUserSaved(userId) > 0
+            userDao.isUserExists() > 0
         }
     }
 }

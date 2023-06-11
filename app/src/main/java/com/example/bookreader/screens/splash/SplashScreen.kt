@@ -45,12 +45,7 @@ fun SplashScreen(
         if (userState is ResultState.Success) {
             when (userState.data) {
                 UserDatabaseStates.SavedUser -> ReaderScreens.HomeScreen
-                UserDatabaseStates.NotSavedUser -> ReaderScreens.UserScreen
                 UserDatabaseStates.UnAuthenticated -> ReaderScreens.LoginScreen
-                UserDatabaseStates.SavedUserRemotely -> {
-                    splashViewModel.fetchUserRemote()
-                    null
-                }
                 else -> null
             }
         } else if (userState is ResultState.Error) {

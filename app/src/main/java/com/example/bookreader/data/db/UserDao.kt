@@ -16,6 +16,6 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveUser(user: UserModel)
 
-   @Query("SELECT COUNT() FROM users WHERE user_id = :userId")
-    suspend fun isUserSaved(userId: String): Int
+   @Query("SELECT COUNT() FROM users")
+    suspend fun isUserExists(): Int
 }
