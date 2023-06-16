@@ -21,17 +21,17 @@ class SplashViewModel @Inject constructor(
         mutableStateOf(ResultState.IDLE)
         private set
 
-    fun fetchUserRemote() {
-        val userId = userRepository.getCurrentUserAuth()?.id
+    private fun fetchUserRemote() {
+        val userAuth = userRepository.getCurrentUserAuth()
         viewModelScope.launch {
             try {
-                val user = userRepository.fetchUserRemoteByUserId(userId!!)
-                if (user != null) {
-                    userRepository.saveUserLocally(user)
-                    userSaveState.value = ResultState.Success(UserDatabaseStates.SavedUser)
-                } else {
-                    userSaveState.value =
-                        ResultState.Success(UserDatabaseStates.NotSavedUser)
+                val user = userAuth?.let { userRepository.fetchUserRemoteByUserId(it.id) }
+                when {
+                    user != null -> {
+                        userRepository.saveUserLocally(user)
+                        userSaveState.value = ResultState.Success(UserDatabaseStates.SavedUser)
+                    }
+                    else -> userSaveState.value = ResultState.Success(UserDatabaseStates.UnAuthenticated)
                 }
             } catch (e: Exception) {
                 userSaveState.value = ResultState.Error(e)
@@ -40,25 +40,17 @@ class SplashViewModel @Inject constructor(
     }
 
     fun checkUserState() {
-        val userAuth = userRepository.getCurrentUserAuth()
-        if (userAuth != null) {
-            val userId = userRepository.getCurrentUserAuth()?.id
-            viewModelScope.launch {
-                try {
-                    // user id is non-null because when this fun is invoked, user UserInfo is not null
-                    val isUserExists = userRepository.isUserSaved(userId!!)
-                    if (isUserExists)
-                        userSaveState.value = ResultState.Success(UserDatabaseStates.SavedUser)
-                    else
-                        userSaveState.value =
-                            ResultState.Success(UserDatabaseStates.SavedUserRemotely)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    userSaveState.value = ResultState.Error(e)
-                }
+        viewModelScope.launch {
+            try {
+                val isUserExists = userRepository.isUserSaved()
+                if (isUserExists)
+                    userSaveState.value = ResultState.Success(UserDatabaseStates.SavedUser)
+                else
+                    fetchUserRemote()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                userSaveState.value = ResultState.Error(e)
             }
-        } else {
-            userSaveState.value = ResultState.Success(UserDatabaseStates.UnAuthenticated)
         }
     }
 }

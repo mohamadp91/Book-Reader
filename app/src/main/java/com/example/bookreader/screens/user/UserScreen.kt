@@ -20,13 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.bookreader.components.ErrorDialog
+import com.example.bookreader.components.ReaderTopBar
 import com.example.bookreader.data.ResultState
 import com.example.bookreader.data.UserDatabaseStates
 import com.example.bookreader.models.UserModel
 import com.example.bookreader.navigation.ReaderScreens
 import com.example.bookreader.util.navigateToDestinationAndRemovePrevious
 import com.example.bookreader.widgets.CustomTextFiled
-import com.example.bookreader.widgets.ReaderTopBar
 
 @Composable
 fun UserScreen(
@@ -66,9 +66,6 @@ fun UserScreen(
         }
     }
 
-    BackHandler(enabled = true) {
-        userViewModel.invalidateSession()
-    }
 }
 
 @Composable
@@ -102,10 +99,9 @@ fun UserScreenPage(
     Scaffold(topBar = {
         ReaderTopBar(
             title = "User Info",
-            onButtonClicked = {},
             navController = navController,
             screen = ReaderScreens.UserScreen
-        )
+        ) {}
     }) {
         Column(
             verticalArrangement = Arrangement.Top,

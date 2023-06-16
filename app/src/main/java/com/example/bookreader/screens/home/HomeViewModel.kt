@@ -1,5 +1,6 @@
 package com.example.bookreader.screens.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookreader.models.UserModel
@@ -16,6 +17,7 @@ class HomeViewModel @Inject constructor(private val userRepository: UserReposito
 
     private var _user: MutableStateFlow<UserModel?> = MutableStateFlow(null)
     val user get() = _user
+    private val tag = "HomeViewModel"
 
     init {
         getUserById()
@@ -26,6 +28,17 @@ class HomeViewModel @Inject constructor(private val userRepository: UserReposito
             userRepository.getUserByIdLocally().distinctUntilChanged().collectLatest {
                 if (it.isNotEmpty())
                     _user.emit(it.first())
+            }
+        }
+    }
+
+    fun logout(user: UserModel) {
+        viewModelScope.launch {
+            try {
+                userRepository.deleteUser(user)
+                userRepository.invalidateSession()
+            } catch (e: Exception) {
+                Log.e(tag, e.message.toString())
             }
         }
     }
