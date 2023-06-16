@@ -18,14 +18,19 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.bookreader.R
 import com.example.bookreader.models.UserModel
+import com.example.bookreader.navigation.ReaderScreens
+import com.example.bookreader.screens.home.HomeViewModel
+import com.example.bookreader.util.navigateToDestinationAndRemovePrevious
 
 @Composable
 fun DrawerMenuContent(
     user: UserModel,
-    navController: NavController
+    navController: NavController,
+    homeViewModel: HomeViewModel = hiltViewModel()
 ) {
     ModalDrawerSheet {
         ProfileUi(user)
@@ -51,7 +56,11 @@ fun DrawerMenuContent(
             icon = Icons.Default.ExitToApp,
             label = "Logout",
             onClick = {
-                // TODO: logout user
+                homeViewModel.logout(user)
+                navController.navigateToDestinationAndRemovePrevious(
+                    ReaderScreens.LoginScreen.name,
+                    ReaderScreens.HomeScreen.name
+                )
             }
         )
     }

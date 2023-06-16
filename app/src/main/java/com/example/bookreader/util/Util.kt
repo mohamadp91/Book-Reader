@@ -10,3 +10,6 @@ fun NavController.navigateToDestinationAndRemovePrevious(
         popUpTo(previousDestination) { inclusive = true }
     }
 }
+
+fun Collection<String?>?.joinToStringNullable(separator: String = ","): String =
+    if (!this.isNullOrEmpty()) this.joinToString(separator) else ""

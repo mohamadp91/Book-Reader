@@ -1,9 +1,6 @@
 package com.example.bookreader.data.db
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.example.bookreader.models.UserModel
 import kotlinx.coroutines.flow.Flow
 
@@ -18,4 +15,7 @@ interface UserDao {
 
    @Query("SELECT COUNT() FROM users")
     suspend fun isUserExists(): Int
+
+    @Delete
+    suspend fun deleteUser(user: UserModel)
 }

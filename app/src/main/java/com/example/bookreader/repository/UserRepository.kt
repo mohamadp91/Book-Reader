@@ -69,6 +69,12 @@ class UserRepository @Inject constructor(
             userDao.isUserExists() > 0
         }
     }
+
+    suspend fun deleteUser(user: UserModel) {
+        withContext(Dispatchers.IO) {
+            userDao.deleteUser(user)
+        }
+    }
 }
 
 
