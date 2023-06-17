@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Search
@@ -42,13 +41,14 @@ fun SearchScreen(navController: NavController = rememberNavController()) {
             }
         }
     ) {
-        SearchContent(paddingValues = it)
+        SearchContent(paddingValues = it, navController = navController)
     }
 }
 
 @Composable
 fun SearchContent(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    navController: NavController
 ) {
 
     Column(
@@ -58,7 +58,7 @@ fun SearchContent(
             .fillMaxSize()
     ) {
         SearchForm()
-        VerticalBookList()
+        VerticalBookList(navController = navController)
     }
 }
 
@@ -95,7 +95,10 @@ fun SearchForm(searchViewModel: SearchViewModel = hiltViewModel()) {
 }
 
 @Composable
-fun VerticalBookList(searchViewModel: SearchViewModel = hiltViewModel()) {
+fun VerticalBookList(
+    navController: NavController,
+    searchViewModel: SearchViewModel = hiltViewModel()
+) {
 
     val scrollState = rememberScrollState()
     val result = searchViewModel.result.value
@@ -111,7 +114,9 @@ fun VerticalBookList(searchViewModel: SearchViewModel = hiltViewModel()) {
                     .padding(16.dp)
             ) {
                 items(books) {
-                    BookVerticalListCard(book = it, onClick = {})
+                    BookVerticalListCard(book = it, onClick = { bookId ->
+                        navController.navigate(ReaderScreens.DetailsScreen.name + bookId)
+                    })
                 }
             }
         }

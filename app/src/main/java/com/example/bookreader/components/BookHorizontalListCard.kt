@@ -26,7 +26,7 @@ import com.example.bookreader.util.joinToStringNullable
 fun BookHorizontalListCard(bookModel: BookModel, onClick: (id: String) -> Unit) {
     Card(
         onClick = {
-            bookModel.id?.let { onClick.invoke(it) }
+            bookModel.bookId?.let { onClick.invoke(it) }
         },
         modifier = Modifier
             .size(180.dp, 215.dp)
@@ -105,7 +105,7 @@ fun BookStats(
 @Composable
 fun BookModelInfoUi(
     title: String? = null,
-    authors: List<String?> = emptyList()
+    authors: List<String>? = emptyList()
 ) {
 
     Column(
