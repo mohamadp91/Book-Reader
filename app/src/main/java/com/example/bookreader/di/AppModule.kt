@@ -79,5 +79,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideBookRepository(bookApi: BookApi): BookRepository = BookRepository(bookApi)
+    fun provideBookRepository(bookApi: BookApi, postgrest: Postgrest): BookRepository =
+        BookRepository(bookApi, postgrest)
 }
