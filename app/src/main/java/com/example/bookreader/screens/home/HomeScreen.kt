@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +19,7 @@ import androidx.navigation.NavController
 import com.example.bookreader.components.BookHorizontalListCard
 import com.example.bookreader.components.DrawerMenuContent
 import com.example.bookreader.components.ReaderTopBar
+import com.example.bookreader.data.ResultState
 import com.example.bookreader.models.BookModel
 import com.example.bookreader.navigation.ReaderScreens
 import com.example.bookreader.widgets.FabButton
@@ -46,7 +48,8 @@ fun HomeScreen(
 @Composable
 fun HomeUiContent(
     navController: NavController,
-    drawerMenuState: DrawerState
+    drawerMenuState: DrawerState,
+    homeViewModel: HomeViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
 
@@ -76,7 +79,7 @@ fun HomeUiContent(
             TitleSection("Your activities...")
             //            BookListUi(books = )
             TitleSection(title = "Reading Books")
-//            BookListUi(books = )
+            BookListSection()
         }
     }
 }
@@ -92,6 +95,36 @@ fun TitleSection(title: String) {
                 fontSize = 15.sp
             )
         )
+    }
+}
+
+@Composable
+fun BookListSection(homeViewModel: HomeViewModel = hiltViewModel()) {
+    val allBooksState =
+        produceState<ResultState<*>>(initialValue = ResultState.Loading, producer = {
+            value = homeViewModel.getBooksFromRemoteDb()
+        })
+    when (allBooksState.value) {
+        is ResultState.Success -> {
+            val booksList = (allBooksState.value as ResultState.Success).data as List<BookModel>
+            if (booksList.isNullOrEmpty()) {
+                Text("No reading list found")
+            } else {
+                BookListUi(books = booksList)
+            }
+        }
+        is ResultState.Error -> {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "An error occurred please check your connection",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        is ResultState.Loading -> {
+            LinearProgressIndicator()
+        }
+        else -> {}
     }
 }
 

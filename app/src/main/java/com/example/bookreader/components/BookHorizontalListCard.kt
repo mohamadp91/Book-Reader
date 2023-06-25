@@ -14,11 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.bookreader.R
 import com.example.bookreader.models.BookModel
-import com.example.bookreader.widgets.CustomIconButton
 import com.example.bookreader.util.joinToStringNullable
+import com.example.bookreader.widgets.CustomIconButton
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,7 +30,7 @@ fun BookHorizontalListCard(bookModel: BookModel, onClick: (id: String) -> Unit) 
             bookModel.bookId?.let { onClick.invoke(it) }
         },
         modifier = Modifier
-            .size(180.dp, 215.dp)
+            .size(200.dp, 240.dp)
             .padding(12.dp),
         elevation = CardDefaults.elevatedCardElevation(4.dp)
     ) {
@@ -44,7 +45,7 @@ fun BookHorizontalListCard(bookModel: BookModel, onClick: (id: String) -> Unit) 
                     painter = painterResource(id = R.drawable.open_book),
                     contentDescription = "open book",
                     modifier = Modifier
-                        .size(80.dp, 100.dp)
+                        .size(70.dp, 100.dp)
                         .background(color = MaterialTheme.colorScheme.surface)
                 )
                 BookStats()
@@ -122,10 +123,15 @@ fun BookModelInfoUi(
             text = title ?: "Book Title",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 6.dp)
         )
         Text(
             text = "[" + authors.joinToStringNullable() + "]",
             fontWeight = FontWeight.Normal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp)
         )
     }
@@ -154,7 +160,7 @@ fun ReadingStatusBadge(isStarted: Boolean = false) {
             text = text,
             color = textColor,
             modifier = Modifier
-                .padding(vertical = 6.dp)
+                .padding(vertical = 8.dp)
         )
     }
 }

@@ -49,4 +49,14 @@ class BookRepository @Inject constructor(
             }
         }
     }
+
+    suspend fun getBooksFromRemoteDb(): List<BookModel> {
+        return withContext(Dispatchers.IO) {
+            try {
+                postgrest["book-db"].select().decodeList<BookModel>()
+            } catch (e: Exception) {
+                throw Exception("An error occurred while fetching the list of book from the database")
+            }
+        }
+    }
 }
