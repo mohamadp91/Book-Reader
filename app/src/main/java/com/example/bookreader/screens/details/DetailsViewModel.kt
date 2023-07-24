@@ -7,7 +7,6 @@ import com.example.bookreader.models.BookModel
 import com.example.bookreader.models.Item
 import com.example.bookreader.repository.BookRepository
 import com.example.bookreader.repository.UserRepository
-import com.example.bookreader.util.getLocalDate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -23,7 +22,7 @@ class DetailsViewModel @Inject constructor(
 
     suspend fun getBookById(bookId: String): ResultState<*> {
         return try {
-            val item = bookRepository.getBookById(bookId)
+            val item = bookRepository.getBookApiModelById(bookId)
             ResultState.Success(item)
         } catch (e: Exception) {
             ResultState.Error(e)

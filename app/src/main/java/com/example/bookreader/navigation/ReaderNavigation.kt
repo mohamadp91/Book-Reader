@@ -9,6 +9,7 @@ import com.example.bookreader.screens.home.HomeScreen
 import com.example.bookreader.screens.login.LoginScreen
 import com.example.bookreader.screens.search.SearchScreen
 import com.example.bookreader.screens.splash.SplashScreen
+import com.example.bookreader.screens.update.UpdateScreen
 import com.example.bookreader.screens.user.UserScreen
 
 @Composable
@@ -34,9 +35,13 @@ fun ReaderNavigation() {
         composable(ReaderScreens.SearchScreen.name) {
             SearchScreen(navController)
         }
-        composable(ReaderScreens.DetailsScreen.name + "{bookId}") {
+        composable(ReaderScreens.DetailsScreen.name + "/{bookId}") {
             val bookId = it.arguments?.getString("bookId") ?: ""
             DetailsScreen(bookId = bookId, navController)
+        }
+        composable(ReaderScreens.UpdateScreen.name + "/{bookId}") {
+            val bookId = it.arguments?.getString("bookId") ?: ""
+            UpdateScreen(navController,bookId)
         }
     }
 }

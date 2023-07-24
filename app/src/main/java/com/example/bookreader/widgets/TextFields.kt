@@ -25,9 +25,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookreader.R
+import com.example.bookreader.util.getCustomVisualTransformation
 
 
 @Composable
@@ -35,62 +37,67 @@ fun CustomTextFiled(
     textState: MutableState<String>,
     icon: ImageVector,
     label: String,
-    action: ImeAction = ImeAction.Next,
     keyboardType: KeyboardType,
+    singleLine: Boolean = true,
+    action: ImeAction = ImeAction.Next,
     isFormValidState: MutableState<Boolean> = mutableStateOf(true),
-    min: Int = 2
+    min: Int = 2,
+    max: Int = 30,
+    roundedCorner: Int = 25,
+    visualTransformation: VisualTransformation = getCustomVisualTransformation(1),
+    modifier: Modifier = Modifier
 ) {
     val isTextFieldErrorState = remember(textState.value) {
-        textState.value.trim().length < min
+        textState.value.trim().length < min ||
+                textState.value.length > max
     }
     isFormValidState.value = isTextFieldErrorState == false
 
     var isFieldTouched by remember {
         mutableStateOf(false)
     }
-
-    Column {
-        OutlinedTextField(
-            value = textState.value,
-            onValueChange = {
-                textState.value = it
+    OutlinedTextField(
+        value = textState.value,
+        onValueChange = {
+            textState.value = it
+        },
+        visualTransformation = visualTransformation,
+        textStyle = TextStyle(
+            MaterialTheme.colorScheme.secondary,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 18.sp,
+            textAlign = TextAlign.Start
+        ),
+        label = {
+            Text(label)
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 3.dp)
+            .focusRequester(FocusRequester())
+            .onFocusChanged {
+                isFieldTouched = it.isFocused
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 3.dp)
-                .focusRequester(FocusRequester())
-                .onFocusChanged {
-                    isFieldTouched = it.isFocused
-                },
-            textStyle = TextStyle(
-                MaterialTheme.colorScheme.secondary,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp
-            ),
-            label = {
-                Text(label)
-            },
-            leadingIcon = {
-                Icon(
-                    icon,
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            },
-            shape = RoundedCornerShape(percent = 25),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = keyboardType,
-                imeAction = action
-            ),
-            singleLine = true,
-            isError = isTextFieldErrorState && isFieldTouched,
-            keyboardActions = KeyboardActions(onNext = {
-                if (isFormValidState.value) return@KeyboardActions
-            })
-        )
-        if (isTextFieldErrorState && isFieldTouched)
-            ErrorText(title = label)
-    }
+        leadingIcon = {
+            Icon(
+                icon,
+                contentDescription = "",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        shape = RoundedCornerShape(percent = roundedCorner),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = action
+        ),
+        singleLine = singleLine,
+        isError = isTextFieldErrorState && isFieldTouched,
+        keyboardActions = KeyboardActions(onNext = {
+            if (isFormValidState.value) return@KeyboardActions
+        })
+    )
+    if (isTextFieldErrorState && isFieldTouched)
+        ErrorText(title = label)
 }
 
 @Composable

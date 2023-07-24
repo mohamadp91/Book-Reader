@@ -21,6 +21,7 @@ import com.example.bookreader.components.DrawerMenuContent
 import com.example.bookreader.components.ReaderTopBar
 import com.example.bookreader.data.ResultState
 import com.example.bookreader.models.BookModel
+import com.example.bookreader.models.BookReadingStatus
 import com.example.bookreader.navigation.ReaderScreens
 import com.example.bookreader.widgets.FabButton
 import kotlinx.coroutines.launch
@@ -76,10 +77,7 @@ fun HomeUiContent(
                 .padding(it)
                 .fillMaxSize()
         ) {
-            TitleSection("Your activities...")
-            //            BookListUi(books = )
-            TitleSection(title = "Reading Books")
-            BookListSection()
+            BookListSection(navController)
         }
     }
 }
@@ -99,18 +97,35 @@ fun TitleSection(title: String) {
 }
 
 @Composable
-fun BookListSection(homeViewModel: HomeViewModel = hiltViewModel()) {
+fun BookListSection(
+    navController: NavController,
+    homeViewModel: HomeViewModel = hiltViewModel()
+) {
     val allBooksState =
         produceState<ResultState<*>>(initialValue = ResultState.Loading, producer = {
             value = homeViewModel.getBooksFromRemoteDb()
         })
+
     when (allBooksState.value) {
         is ResultState.Success -> {
             val booksList = (allBooksState.value as ResultState.Success).data as List<BookModel>
             if (booksList.isNullOrEmpty()) {
                 Text("No reading list found")
             } else {
-                BookListUi(books = booksList)
+                Column(modifier = Modifier.fillMaxSize()) {
+                    val (activityBooks, readingBooks) = booksList.partition { book ->
+                        book.startReading != null
+                    }
+
+                    TitleSection(title = "Your Activity...")
+                    BookListUi(books = activityBooks, navController = navController)
+
+                    TitleSection(title = "Reading Book")
+                    BookListUi(
+                        books = readingBooks,
+                        navController = navController
+                    )
+                }
             }
         }
         is ResultState.Error -> {
@@ -130,7 +145,8 @@ fun BookListSection(homeViewModel: HomeViewModel = hiltViewModel()) {
 
 @Composable
 fun BookListUi(
-    books: List<BookModel>
+    books: List<BookModel>,
+    navController: NavController
 ) {
     LazyRow(
         horizontalArrangement = Arrangement.Start,
@@ -139,8 +155,17 @@ fun BookListUi(
             .fillMaxWidth()
             .padding(4.dp)
     ) {
+
+
         items(items = books) { book ->
-            BookHorizontalListCard(book) {}
+            val readingStatus = when {
+                book.endReading != null -> BookReadingStatus.Finished
+                book.endReading == null && book.startReading != null -> BookReadingStatus.Reading
+                else -> BookReadingStatus.NotStarted
+            }
+            BookHorizontalListCard(book, readingStatus) {
+                navController.navigate(ReaderScreens.UpdateScreen.name + "/" + book.bookId)
+            }
         }
     }
 }
