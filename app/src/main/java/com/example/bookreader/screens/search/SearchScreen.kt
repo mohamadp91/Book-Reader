@@ -3,7 +3,6 @@ package com.example.bookreader.screens.search
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Search
@@ -100,7 +99,6 @@ fun VerticalBookList(
     searchViewModel: SearchViewModel = hiltViewModel()
 ) {
 
-    val scrollState = rememberScrollState()
     val result = searchViewModel.result.value
 
     when (result) {
@@ -115,7 +113,7 @@ fun VerticalBookList(
             ) {
                 items(books) {
                     BookVerticalListCard(book = it, onClick = { bookId ->
-                        navController.navigate(ReaderScreens.DetailsScreen.name + bookId)
+                        navController.navigate(ReaderScreens.DetailsScreen.name + "/" + bookId)
                     })
                 }
             }

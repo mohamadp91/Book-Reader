@@ -28,7 +28,7 @@ class BookRepository @Inject constructor(
         }
     }
 
-    suspend fun getBookById(bookId: String): Item {
+    suspend fun getBookApiModelById(bookId: String): Item {
         return withContext(Dispatchers.IO) {
             try {
                 bookApi.getBookById(bookId)
@@ -46,6 +46,57 @@ class BookRepository @Inject constructor(
             } catch (e: Exception) {
                 Log.e("book repository", e.message.toString())
                 throw Exception("An error occurred")
+            }
+        }
+    }
+
+    suspend fun getBooksFromRemoteDb(): List<BookModel> {
+        return withContext(Dispatchers.IO) {
+            try {
+                postgrest["book-db"].select().decodeList<BookModel>()
+            } catch (e: Exception) {
+                throw Exception("An error occurred while fetching the list of book from the database")
+            }
+        }
+    }
+
+    suspend fun getBookByIdFromRemoteDb(bookId: String): BookModel {
+        return withContext(Dispatchers.IO) {
+            try {
+                postgrest["book-db"].select() {
+                    BookModel::bookId eq bookId
+                }.decodeSingle<BookModel>()
+            } catch (e: Exception) {
+                throw Exception("An error occurred while fetching the list of book from the database")
+            }
+        }
+    }
+
+    suspend fun updateBookInRemoteDb(bookModel: BookModel) {
+        return withContext(Dispatchers.IO) {
+            try {
+                postgrest["book-db"].update({
+                    BookModel::notes setTo bookModel.notes
+                    BookModel::startReading setTo bookModel.startReading
+                    BookModel::endReading setTo bookModel.endReading
+                    BookModel::rate setTo bookModel.rate
+                }) {
+                    BookModel::bookId eq bookModel.bookId
+                }
+            } catch (e: Exception) {
+                throw Exception("An error occurred while fetching the list of book from the database")
+            }
+        }
+    }
+
+    suspend fun deleteBookInRemoteDb(bookId: String) {
+        return withContext(Dispatchers.IO) {
+            try {
+                postgrest["book-db"].delete {
+                    BookModel::bookId eq bookId
+                }
+            } catch (e: Exception) {
+                throw Exception("An error occurred while fetching the list of book from the database")
             }
         }
     }

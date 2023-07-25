@@ -13,23 +13,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.bookreader.R
 import com.example.bookreader.models.BookModel
+import com.example.bookreader.models.BookReadingStatus
 import com.example.bookreader.widgets.CustomIconButton
-import com.example.bookreader.util.joinToStringNullable
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookHorizontalListCard(bookModel: BookModel, onClick: (id: String) -> Unit) {
+fun BookHorizontalListCard(
+    bookModel: BookModel,
+    readingStatus: BookReadingStatus,
+    onClick: (id: String) -> Unit
+) {
     Card(
         onClick = {
             bookModel.bookId?.let { onClick.invoke(it) }
         },
         modifier = Modifier
-            .size(180.dp, 215.dp)
+            .size(200.dp, 240.dp)
             .padding(12.dp),
         elevation = CardDefaults.elevatedCardElevation(4.dp)
     ) {
@@ -44,10 +47,10 @@ fun BookHorizontalListCard(bookModel: BookModel, onClick: (id: String) -> Unit) 
                     painter = painterResource(id = R.drawable.open_book),
                     contentDescription = "open book",
                     modifier = Modifier
-                        .size(80.dp, 100.dp)
+                        .size(70.dp, 100.dp)
                         .background(color = MaterialTheme.colorScheme.surface)
                 )
-                BookStats()
+                BookStats(rate = bookModel.rate)
             }
             BookModelInfoUi(bookModel.title, bookModel.authors)
             Row(
@@ -55,7 +58,7 @@ fun BookHorizontalListCard(bookModel: BookModel, onClick: (id: String) -> Unit) 
                 verticalAlignment = Alignment.Bottom,
                 modifier = Modifier.fillMaxSize()
             ) {
-                ReadingStatusBadge()
+                ReadingStatusBadge(readingStatus)
             }
         }
 
@@ -64,7 +67,7 @@ fun BookHorizontalListCard(bookModel: BookModel, onClick: (id: String) -> Unit) 
 
 @Composable
 fun BookStats(
-    rate: Float? = null,
+    rate: Double? = null,
     isFavorite: Boolean = false
 ) {
     Column(
@@ -103,42 +106,20 @@ fun BookStats(
 }
 
 @Composable
-fun BookModelInfoUi(
-    title: String? = null,
-    authors: List<String>? = emptyList()
-) {
+fun ReadingStatusBadge(readingStatus: BookReadingStatus) {
 
-    Column(
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.Top,
-        modifier = Modifier
-            .padding(
-                top = 6.dp,
-                start = 6.dp,
-                bottom = 3.dp
-            )
-    ) {
-        Text(
-            text = title ?: "Book Title",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = "[" + authors.joinToStringNullable() + "]",
-            fontWeight = FontWeight.Normal,
-            modifier = Modifier.padding(top = 6.dp)
-        )
-    }
-}
-
-@Composable
-fun ReadingStatusBadge(isStarted: Boolean = false) {
-
+    var text = readingStatus.name
     val (backgroundColor, textColor) = with(MaterialTheme.colorScheme) {
-        if (isStarted) primary to onPrimary else secondary to onSecondary
+        when (readingStatus) {
+            BookReadingStatus.Reading -> primary to onPrimary
+            BookReadingStatus.Finished -> onSurface to surface
+            else -> {
+                text = "Not Started"
+                secondary to onSecondary
+            }
+        }
     }
 
-    val text = if (isStarted) "Reading..." else "Not Started"
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -154,7 +135,7 @@ fun ReadingStatusBadge(isStarted: Boolean = false) {
             text = text,
             color = textColor,
             modifier = Modifier
-                .padding(vertical = 6.dp)
+                .padding(vertical = 8.dp)
         )
     }
 }
