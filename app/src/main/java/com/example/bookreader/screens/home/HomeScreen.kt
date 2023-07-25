@@ -153,6 +153,7 @@ fun BookListUi(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .fillMaxHeight(.5f)
             .padding(4.dp)
     ) {
 

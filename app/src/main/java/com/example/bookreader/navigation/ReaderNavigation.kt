@@ -35,9 +35,9 @@ fun ReaderNavigation() {
         composable(ReaderScreens.SearchScreen.name) {
             SearchScreen(navController)
         }
-        composable(ReaderScreens.DetailsScreen.name + "/{bookId}") {
-            val bookId = it.arguments?.getString("bookId") ?: ""
-            DetailsScreen(bookId = bookId, navController)
+        composable(ReaderScreens.DetailsScreen.name + "/{bookWorkId}") {
+            val bookId = it.arguments?.getString("bookWorkId") ?: ""
+            DetailsScreen(bookWorkId = bookId, navController)
         }
         composable(ReaderScreens.UpdateScreen.name + "/{bookId}") {
             val bookId = it.arguments?.getString("bookId") ?: ""

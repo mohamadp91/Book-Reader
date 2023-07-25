@@ -72,7 +72,7 @@ object AppModule {
     fun provideBookApi(): BookApi =
         Retrofit
             .Builder()
-            .baseUrl(Constants.GOOGLE_BOOKS_API)
+            .baseUrl(Constants.OPEN_LIB_API)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(BookApi::class.java)

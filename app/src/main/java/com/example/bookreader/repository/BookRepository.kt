@@ -4,7 +4,7 @@ import android.util.Log
 import com.example.bookreader.data.network.BookApi
 import com.example.bookreader.models.BookApiModel
 import com.example.bookreader.models.BookModel
-import com.example.bookreader.models.Item
+import com.example.bookreader.models.DocsApiModel
 import io.github.jan.supabase.postgrest.Postgrest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,10 +17,10 @@ class BookRepository @Inject constructor(
 
     private val tag = "Book Repository"
 
-    suspend fun getBookApiModel(q: String): BookApiModel {
+    suspend fun getDocsApi(q: String): DocsApiModel {
         return withContext(Dispatchers.IO) {
             try {
-                bookApi.getBookApiModel(q)
+                bookApi.getDocsApi(q)
             } catch (e: Exception) {
                 Log.e(tag, e.message.toString())
                 throw Exception("An error occurred in fetching book list")
@@ -28,13 +28,13 @@ class BookRepository @Inject constructor(
         }
     }
 
-    suspend fun getBookApiModelById(bookId: String): Item {
+    suspend fun getBookByWork(work: String): BookApiModel {
         return withContext(Dispatchers.IO) {
             try {
-                bookApi.getBookById(bookId)
+                bookApi.getBookByWork(work)
             } catch (e: Exception) {
                 Log.e(tag, e.message.toString())
-                throw Exception("An error occurred in fetching book with id ${bookId}")
+                throw Exception("An error occurred in fetching book with id ${work}")
             }
         }
     }

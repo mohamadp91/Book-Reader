@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import com.example.bookreader.R
 import com.example.bookreader.models.BookModel
 import com.example.bookreader.models.BookReadingStatus
+import com.example.bookreader.util.getImageUrlById
+import com.example.bookreader.widgets.BookImage
 import com.example.bookreader.widgets.CustomIconButton
 
 
@@ -43,10 +45,9 @@ fun BookHorizontalListCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.open_book),
-                    contentDescription = "open book",
-                    modifier = Modifier
+                BookImage(
+                    bookCoverUrl = bookModel.imageUrl,
+                    imageModifier = Modifier
                         .size(70.dp, 100.dp)
                         .background(color = MaterialTheme.colorScheme.surface)
                 )

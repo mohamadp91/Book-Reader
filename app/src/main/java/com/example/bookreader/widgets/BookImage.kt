@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -15,22 +16,23 @@ import com.example.bookreader.R
 
 @Composable
 fun BookImage(
-    bookUrl: String?, imageModifier: Modifier = Modifier
+    bookCoverUrl: String?, imageModifier: Modifier = Modifier
         .fillMaxHeight()
         .width(90.dp)
         .background(color = MaterialTheme.colorScheme.surface)
 ) {
-
-    if (bookUrl.isNullOrEmpty())
+    if (bookCoverUrl.isNullOrEmpty())
         Image(
             painter = painterResource(id = R.drawable.open_book),
             contentDescription = "book image",
-            modifier = imageModifier
+            modifier = imageModifier,
+            contentScale = ContentScale.Crop
         )
     else
         AsyncImage(
-            model = bookUrl,
+            model = bookCoverUrl,
             contentDescription = "Async book image",
-            modifier = imageModifier
+            modifier = imageModifier,
+            contentScale = ContentScale.Crop
         )
 }

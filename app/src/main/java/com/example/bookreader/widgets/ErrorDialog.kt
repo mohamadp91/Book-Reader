@@ -18,7 +18,9 @@ fun ErrorDialog(
     buttonTitle: String = "close",
     onDismissRequest: () -> Unit
 ) {
-    androidx.compose.material3.AlertDialog(onDismissRequest = {},
+    androidx.compose.material3.AlertDialog(onDismissRequest = {
+        onDismissRequest.invoke()
+    },
         modifier = Modifier
             .wrapContentSize()
             .padding(6.dp),

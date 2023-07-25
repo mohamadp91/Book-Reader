@@ -3,6 +3,7 @@ package com.example.bookreader.screens.update
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -10,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -97,7 +99,13 @@ fun UpdateScreenHeaderRow(book: BookModel) {
             .height(100.dp)
             .padding(16.dp)
     ) {
-        BookImage(bookUrl = book.imageUrl)
+        BookImage(
+            bookCoverUrl = book.imageUrl, imageModifier = Modifier
+                .size(130.dp, 170.dp)
+                .clip(
+                    RoundedCornerShape(percent = 5)
+                )
+        )
         BookModelInfoUi(book.title, book.authors)
     }
 }
