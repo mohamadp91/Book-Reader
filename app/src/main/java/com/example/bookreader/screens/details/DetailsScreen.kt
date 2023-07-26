@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -32,8 +31,8 @@ import androidx.navigation.NavController
 import com.example.bookreader.components.ErrorDialog
 import com.example.bookreader.data.ResultState
 import com.example.bookreader.models.BookApiModel
+import com.example.bookreader.models.BookDetails
 import com.example.bookreader.models.DescriptionObject
-import com.example.bookreader.screens.search.SearchViewModel
 import com.example.bookreader.util.getImageUrlById
 import com.example.bookreader.util.joinToStringNullable
 import com.example.bookreader.widgets.BookImage
@@ -41,12 +40,13 @@ import kotlinx.datetime.LocalDateTime
 
 @Composable
 fun DetailsScreen(
-    bookWorkId: String,
+    bookDetails: BookDetails,
     navController: NavController,
-    detailsViewModel: DetailsViewModel = hiltViewModel()) {
+    detailsViewModel: DetailsViewModel = hiltViewModel()
+) {
     val bookState = produceState<ResultState<*>>(initialValue = ResultState.Loading,
         producer = {
-            this.value = detailsViewModel.getBookByWork(bookWorkId)
+            this.value = detailsViewModel.getBookByWork(bookDetails.bookId)
         })
     Card(
         modifier = Modifier
@@ -57,6 +57,11 @@ fun DetailsScreen(
         when (bookState.value) {
             is ResultState.Success -> {
                 val book = (bookState.value as ResultState.Success<*>).data as BookApiModel
+                with(book) {
+                    id = bookDetails.bookId
+                    bookAuthors = bookDetails.authors
+                    pageCount = bookDetails.pageCount
+                }
                 DetailsScreenUi(book, navController)
             }
             is ResultState.Loading -> {
@@ -64,11 +69,13 @@ fun DetailsScreen(
             }
             is ResultState.Error -> {
                 var dialogState by remember {
-                    mutableStateOf(false)
+                    mutableStateOf(true)
                 }
-                ErrorDialog(error = (bookState.value as ResultState.Error).exception.message) {
-                    dialogState = !dialogState
-                }
+                if (dialogState)
+                    ErrorDialog(error = (bookState.value as ResultState.Error).exception.message) {
+                        dialogState = !dialogState
+                        navController.popBackStack()
+                    }
             }
             else -> {
 
@@ -79,7 +86,10 @@ fun DetailsScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DetailsScreenUi(book: BookApiModel, navController: NavController) {
+fun DetailsScreenUi(
+    book: BookApiModel,
+    navController: NavController
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -126,11 +136,11 @@ fun DetailsScreenUi(book: BookApiModel, navController: NavController) {
             )
             InfoText(
                 title = "Authors",
-                text = "[ book.author_name.joinToStringNullable() ] ",
+                text = book.bookAuthors,
             )
             InfoText(
                 title = "Page count",
-                text = "book.number_of_pages_median",
+                text = book.pageCount,
             )
             InfoText(
                 title = "Subjects",

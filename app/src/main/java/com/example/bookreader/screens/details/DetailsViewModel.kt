@@ -39,15 +39,14 @@ class DetailsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 userRepository.getUserByIdLocally().collectLatest {
-                    val work = book.key.substringAfter("/works/")
                     if (it.isNotEmpty()) {
                         val bookModel = BookModel(
-                            bookId = work,
+                            bookId = book.id,
                             title = book.title,
-                            // todo : authors
-//                            authors = book.authors.,
+                            authors = book.bookAuthors.substring(1, book.bookAuthors.length - 1).split(","),
                             description = DescriptionObject.getBookDescription(book.description),
                             categories = book.subjects,
+                            pageCount = book.pageCount.toInt(),
                             publishedDate = LocalDateTime.parse(book.created.value).date.toString(),
                             imageUrl = getImageUrlById(book.covers?.first()?.toString() ?: ""),
                             userId = it.first().userId

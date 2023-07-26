@@ -1,6 +1,5 @@
 package com.example.bookreader.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,12 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.bookreader.R
 import com.example.bookreader.models.BookModel
 import com.example.bookreader.models.BookReadingStatus
-import com.example.bookreader.util.getImageUrlById
 import com.example.bookreader.widgets.BookImage
 import com.example.bookreader.widgets.CustomIconButton
 
@@ -48,7 +44,7 @@ fun BookHorizontalListCard(
                 BookImage(
                     bookCoverUrl = bookModel.imageUrl,
                     imageModifier = Modifier
-                        .size(70.dp, 100.dp)
+                        .size(85.dp, 100.dp)
                         .background(color = MaterialTheme.colorScheme.surface)
                 )
                 BookStats(rate = bookModel.rate)

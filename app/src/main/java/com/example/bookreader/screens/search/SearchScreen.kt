@@ -22,7 +22,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.bookreader.components.ReaderTopBar
 import com.example.bookreader.data.ResultState
-import com.example.bookreader.models.AuthorsAndPageNumberAndImg
 import com.example.bookreader.models.DocsApiModel
 import com.example.bookreader.navigation.ReaderScreens
 import com.example.bookreader.util.joinToStringNullable
@@ -116,9 +115,9 @@ fun VerticalBookList(
                 items(books) {
                     BookVerticalListCard(doc = it, onClick = {
                         navController.navigate(
-                            ReaderScreens.DetailsScreen.name + it.key.substringAfter(
+                            ReaderScreens.DetailsScreen.name + "/" + it.key.substringAfter(
                                 "/works/"
-                            )
+                            ) + "/${it.author_name.joinToStringNullable()}/${it.number_of_pages_median}"
                         )
                     })
                 }
