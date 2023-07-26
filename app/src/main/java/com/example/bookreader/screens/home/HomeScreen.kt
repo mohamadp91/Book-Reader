@@ -112,16 +112,21 @@ fun BookListSection(
             if (booksList.isNullOrEmpty()) {
                 Text("No reading list found")
             } else {
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Top
+                ) {
                     val (activityBooks, readingBooks) = booksList.partition { book ->
                         book.startReading != null
                     }
 
-                    TitleSection(title = "Your Activity...")
-                    BookListUi(books = activityBooks, navController = navController)
-
-                    TitleSection(title = "Reading Book")
                     BookListUi(
+                        title = "Your Activity...",
+                        books = activityBooks,
+                        navController = navController
+                    )
+                    BookListUi(
+                        title = "Reading Book",
                         books = readingBooks,
                         navController = navController
                     )
@@ -145,15 +150,17 @@ fun BookListSection(
 
 @Composable
 fun BookListUi(
+    title: String,
     books: List<BookModel>,
     navController: NavController
 ) {
+    TitleSection(title = title)
     LazyRow(
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp)
+            .padding(horizontal = 4.dp, vertical = 12.dp)
     ) {
 
 

@@ -1,21 +1,36 @@
 package com.example.bookreader.screens.update
 
+import android.view.MotionEvent
 import android.widget.Toast
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.example.bookreader.R
 import com.example.bookreader.components.BookModelInfoUi
 import com.example.bookreader.components.ErrorDialog
 import com.example.bookreader.components.ReaderTopBar
@@ -51,37 +66,51 @@ fun UpdateScreen(
             navController.popBackStack()
         }
     }) {
-        Column(
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier
-                .padding(it)
-                .fillMaxSize()
-        ) {
-            when (bookModelState) {
-                is ResultState.Success -> {
-                    val book = bookModelState.data as BookModel
-
-                    UpdateScreenHeaderRow(book)
-                    Divider(modifier = Modifier.fillMaxWidth())
-                    UpdateForm(book, navController)
-                }
-                is ResultState.Loading -> {
-                    LinearProgressIndicator()
-                }
-                is ResultState.Error -> {
-                    val dialogState = rememberSaveable { mutableStateOf(true) }
-                    ErrorDialog(
-                        error = bookModelState.exception.message,
-                        "Retry"
-                    ) {
-                        coroutine.launch {
-                            viewModel.getBookById(bookId)
-                            dialogState.value = false
+        var imageUrl by remember {
+            mutableStateOf("")
+        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = "img",
+                modifier = Modifier
+                    .padding(it)
+                    .fillMaxSize()
+                    .alpha(.08f)
+                    .blur(1000.dp)
+            )
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it)
+            ) {
+                when (bookModelState) {
+                    is ResultState.Success -> {
+                        val book = bookModelState.data as BookModel
+                        imageUrl = book.imageUrl ?: ""
+                        UpdateScreenHeaderRow(book)
+                        Divider(modifier = Modifier.fillMaxWidth())
+                        UpdateForm(book, navController)
+                    }
+                    is ResultState.Loading -> {
+                        LinearProgressIndicator()
+                    }
+                    is ResultState.Error -> {
+                        val dialogState = rememberSaveable { mutableStateOf(true) }
+                        ErrorDialog(
+                            error = bookModelState.exception.message,
+                            "Retry"
+                        ) {
+                            coroutine.launch {
+                                viewModel.getBookById(bookId)
+                                dialogState.value = false
+                            }
                         }
                     }
+                    else -> {}
                 }
-                else -> {}
             }
         }
     }
@@ -94,10 +123,15 @@ fun UpdateScreenHeaderRow(book: BookModel) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp)
             .padding(16.dp)
     ) {
-        BookImage(bookUrl = book.imageUrl)
+        BookImage(
+            bookCoverUrl = book.imageUrl, imageModifier = Modifier
+                .size(130.dp, 170.dp)
+                .clip(
+                    RoundedCornerShape(percent = 5)
+                )
+        )
         BookModelInfoUi(book.title, book.authors)
     }
 }
@@ -125,14 +159,13 @@ fun UpdateForm(
         mutableStateOf("")
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         TitleSection(title = "Edit Book Info")
-        LazyColumn(modifier = Modifier.height(300.dp)) {
+        LazyColumn(modifier = Modifier.height(150.dp)) {
             item {
                 CustomTextFiled(
                     textState = noteState,
@@ -145,7 +178,7 @@ fun UpdateForm(
                     max = 500,
                     visualTransformation = getCustomVisualTransformation(11),
                     modifier = Modifier
-                        .height(300.dp),
+                        .height(150.dp),
                     action = ImeAction.None
                 )
             }
@@ -184,14 +217,47 @@ fun UpdateForm(
 }
 
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RatingSection(ratingState: MutableState<Double>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(70.dp)
+            .height(60.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
-
+        for (i in 1..5) {
+            var selected by remember(ratingState.value) {
+                mutableStateOf((ratingState.value - i) >= 0)
+            }
+            val size by animateDpAsState(
+                targetValue = if (selected) 50.dp else 40.dp,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+            )
+            val rotate by animateFloatAsState(
+                targetValue = if (selected) 360f else 0f,
+                animationSpec = tween(durationMillis = 500, delayMillis = 200,easing = LinearEasing)
+            )
+            Icon(
+                painter = painterResource(id = R.drawable.star_rate),
+                contentDescription = "",
+                tint = if (selected) Color.Yellow else Color.Gray,
+                modifier = Modifier
+                    .size(size)
+                    .rotate(rotate)
+                    .pointerInteropFilter {
+                        when (it.action) {
+                            MotionEvent.ACTION_DOWN -> {
+                                ratingState.value = i.toDouble()
+                            }
+                            MotionEvent.ACTION_UP -> {
+                            }
+                        }
+                        true
+                    }
+            )
+        }
     }
 }
 

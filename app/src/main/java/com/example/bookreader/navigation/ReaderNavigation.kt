@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.bookreader.models.BookDetails
 import com.example.bookreader.screens.details.DetailsScreen
 import com.example.bookreader.screens.home.HomeScreen
 import com.example.bookreader.screens.login.LoginScreen
@@ -35,13 +36,17 @@ fun ReaderNavigation() {
         composable(ReaderScreens.SearchScreen.name) {
             SearchScreen(navController)
         }
-        composable(ReaderScreens.DetailsScreen.name + "/{bookId}") {
-            val bookId = it.arguments?.getString("bookId") ?: ""
-            DetailsScreen(bookId = bookId, navController)
+        composable(ReaderScreens.DetailsScreen.name + "/{bookWorkId}" + "/{authors}" + "/{pageNumbers}") {
+            val bookDetails = BookDetails(
+                bookId = it.arguments?.getString("bookWorkId") ?: "",
+                authors = it.arguments?.getString("authors") ?: "",
+                pageCount = it.arguments?.getString("pageNumbers") ?: ""
+            )
+            DetailsScreen(bookDetails = bookDetails, navController)
         }
         composable(ReaderScreens.UpdateScreen.name + "/{bookId}") {
             val bookId = it.arguments?.getString("bookId") ?: ""
-            UpdateScreen(navController,bookId)
+            UpdateScreen(navController, bookId)
         }
     }
 }

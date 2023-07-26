@@ -1,5 +1,7 @@
 package com.example.bookreader.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -14,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.example.bookreader.util.joinToStringNullable
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BookModelInfoUi(
     title: String? = null,
@@ -36,7 +39,13 @@ fun BookModelInfoUi(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 6.dp)
+            modifier = Modifier
+                .padding(top = 6.dp)
+                .basicMarquee(
+                    iterations = Int.MAX_VALUE,
+                    delayMillis = 500,
+                    initialDelayMillis = 2000
+                )
         )
         Text(
             text = "[" + authors.joinToStringNullable() + "]",

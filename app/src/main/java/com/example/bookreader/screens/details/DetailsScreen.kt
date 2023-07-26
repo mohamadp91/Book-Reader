@@ -1,12 +1,9 @@
 package com.example.bookreader.screens.details
 
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -17,10 +14,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.HtmlCompat
@@ -28,20 +30,23 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.bookreader.components.ErrorDialog
 import com.example.bookreader.data.ResultState
-import com.example.bookreader.models.Item
+import com.example.bookreader.models.BookApiModel
+import com.example.bookreader.models.BookDetails
+import com.example.bookreader.models.DescriptionObject
+import com.example.bookreader.util.getImageUrlById
 import com.example.bookreader.util.joinToStringNullable
 import com.example.bookreader.widgets.BookImage
+import kotlinx.datetime.LocalDateTime
 
 @Composable
 fun DetailsScreen(
-    bookId: String,
+    bookDetails: BookDetails,
     navController: NavController,
     detailsViewModel: DetailsViewModel = hiltViewModel()
 ) {
-
-    val item = produceState<ResultState<*>>(initialValue = ResultState.Loading,
+    val bookState = produceState<ResultState<*>>(initialValue = ResultState.Loading,
         producer = {
-            this.value = detailsViewModel.getBookById(bookId)
+            this.value = detailsViewModel.getBookByWork(bookDetails.bookId)
         })
     Card(
         modifier = Modifier
@@ -49,9 +54,14 @@ fun DetailsScreen(
             .fillMaxSize(),
         elevation = CardDefaults.elevatedCardElevation(8.dp)
     ) {
-        when (item.value) {
+        when (bookState.value) {
             is ResultState.Success -> {
-                val book = (item.value as ResultState.Success<*>).data as Item
+                val book = (bookState.value as ResultState.Success<*>).data as BookApiModel
+                with(book) {
+                    id = bookDetails.bookId
+                    bookAuthors = bookDetails.authors
+                    pageCount = bookDetails.pageCount
+                }
                 DetailsScreenUi(book, navController)
             }
             is ResultState.Loading -> {
@@ -59,11 +69,13 @@ fun DetailsScreen(
             }
             is ResultState.Error -> {
                 var dialogState by remember {
-                    mutableStateOf(false)
+                    mutableStateOf(true)
                 }
-                ErrorDialog(error = (item.value as ResultState.Error).exception.message) {
-                    dialogState = !dialogState
-                }
+                if (dialogState)
+                    ErrorDialog(error = (bookState.value as ResultState.Error).exception.message) {
+                        dialogState = !dialogState
+                        navController.popBackStack()
+                    }
             }
             else -> {
 
@@ -72,8 +84,12 @@ fun DetailsScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DetailsScreenUi(item: Item, navController: NavController) {
+fun DetailsScreenUi(
+    book: BookApiModel,
+    navController: NavController
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -82,53 +98,60 @@ fun DetailsScreenUi(item: Item, navController: NavController) {
         verticalArrangement = Arrangement.Top
     ) {
         BookImage(
-            bookUrl = item.volumeInfo.imageLinks?.let {
-                if (it !== null) it.smallThumbnail else ""
-            },
+            bookCoverUrl = getImageUrlById(
+                book.covers?.first()?.toString() ?: book.key.substringAfter("/works/")
+            ),
             imageModifier = Modifier
                 .size(130.dp)
-                .background(color = Color.White, shape = CircleShape)
-                .padding(16.dp)
-                .clip(CircleShape)
+                .clip(RoundedCornerShape(percent = 10))
         )
-        val textModifier = Modifier.padding(top = 6.dp)
         Text(
-            text = item.volumeInfo.title,
+            text = book.title,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             overflow = TextOverflow.Ellipsis,
-            modifier = textModifier,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(top = 6.dp)
+                .height(60.dp)
+                .basicMarquee(
+                    iterations = Int.MAX_VALUE,
+                    delayMillis = 500,
+                    initialDelayMillis = 1000
+                )
         )
-        Text(
-            text = "Published: ${item.volumeInfo.publishedDate}",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = textModifier
-        )
-        Text(
-            text = "Authors: [" + item.volumeInfo.authors.joinToStringNullable() + " ]",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = textModifier
-        )
-
-        Text(
-            text = "Page count: ${item.volumeInfo.pageCount}",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = textModifier
+        Divider(
+            modifier = Modifier
+                .fillMaxWidth()
         )
 
-        Text(
-            text = "Categories: [ " + item.volumeInfo.categories.joinToStringNullable() + " ]",
-            style = MaterialTheme.typography.titleSmall,
-            textAlign = TextAlign.Justify,
-            modifier = textModifier,
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 2
-        )
+        Column(
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier.padding(top = 12.dp)
+        ) {
+            InfoText(
+                title = "Publish date",
+                text = LocalDateTime.parse(book.created.value).date.toString()
+            )
+            InfoText(
+                title = "Authors",
+                text = book.bookAuthors,
+            )
+            InfoText(
+                title = "Page count",
+                text = book.pageCount,
+            )
+            InfoText(
+                title = "Subjects",
+                text = book.subjects.joinToStringNullable(),
+            )
+        }
+
         Spacer(modifier = Modifier.height(5.dp))
 
         val desc =
-            if (item.volumeInfo.description.isNullOrEmpty()) "No description" else item.volumeInfo.description
+            DescriptionObject.getBookDescription(book.description)
 
         val cleanDescription = HtmlCompat.fromHtml(
             desc,
@@ -136,7 +159,8 @@ fun DetailsScreenUi(item: Item, navController: NavController) {
         ).toString()
 
         LazyColumn(
-            modifier = textModifier
+            modifier = Modifier
+                .padding(top = 16.dp)
                 .border(
                     BorderStroke(
                         1.dp,
@@ -144,7 +168,8 @@ fun DetailsScreenUi(item: Item, navController: NavController) {
                     ), shape = RoundedCornerShape(6.dp)
                 )
                 .padding(vertical = 6.dp)
-                .height(300.dp).fillMaxWidth()
+                .height(200.dp)
+                .fillMaxWidth()
         ) {
             item {
                 Text(
@@ -152,18 +177,55 @@ fun DetailsScreenUi(item: Item, navController: NavController) {
                     style = MaterialTheme.typography.titleSmall,
                     textAlign = TextAlign.Justify,
                     lineHeight = 25.sp,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
+                    maxLines = 15
                 )
             }
         }
-        ButtonRow(navController = navController, item)
+        ButtonRow(navController = navController, book)
     }
+}
+
+@Composable
+fun InfoText(
+    title: String,
+    text: String,
+    modifier: Modifier = Modifier.padding(top = 6.dp)
+) {
+    val textColor = Color.DarkGray
+    Text(
+        text = buildAnnotatedString {
+            withStyle(ParagraphStyle(textAlign = TextAlign.Left, lineHeight = 24.sp)) {
+                withStyle(SpanStyle(fontSize = 18.sp)) {
+                    withStyle(
+                        SpanStyle(
+                            color = textColor.copy(.8f),
+                            fontWeight = FontWeight.Normal
+                        )
+                    ) {
+                        append("$title : ")
+                    }
+                    withStyle(
+                        SpanStyle(
+                            color = textColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    ) {
+                        append("\n \t$text")
+                    }
+                }
+            }
+        },
+        modifier = modifier,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable
 fun ButtonRow(
     navController: NavController,
-    item: Item,
+    book: BookApiModel,
     detailsViewModel: DetailsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -174,29 +236,43 @@ fun ButtonRow(
             .fillMaxWidth()
             .padding(vertical = 10.dp)
     ) {
-        Button(
+        IconButtonDetailScreen(
+            color = MaterialTheme.colorScheme.error,
+            icon = Icons.Default.Close,
             onClick = {
                 navController.popBackStack()
             },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = ""
-            )
-        }
-        Button(
+        )
+        IconButtonDetailScreen(
+            color = MaterialTheme.colorScheme.primary,
+            icon = Icons.Default.Check,
             onClick = {
-                detailsViewModel.saveBookInDb(item) {
+                detailsViewModel.saveBookInDb(book) {
                     Toast.makeText(context, "Book saved successfully", Toast.LENGTH_LONG).show()
                     navController.popBackStack()
                 }
             },
-        ) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = ""
-            )
-        }
+        )
+    }
+}
+
+@Composable
+fun IconButtonDetailScreen(
+    onClick: () -> Unit,
+    icon: ImageVector,
+    color: Color
+) {
+    IconButton(
+        modifier = Modifier.size(70.dp, 60.dp),
+        onClick = {
+            onClick.invoke()
+        },
+        colors = IconButtonDefaults.iconButtonColors(containerColor = color)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = "",
+            tint = Color.White
+        )
     }
 }

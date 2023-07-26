@@ -20,12 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.bookreader.components.BookVerticalListCard
 import com.example.bookreader.components.ReaderTopBar
 import com.example.bookreader.data.ResultState
-import com.example.bookreader.models.BookApiModel
+import com.example.bookreader.models.DocsApiModel
 import com.example.bookreader.navigation.ReaderScreens
+import com.example.bookreader.util.joinToStringNullable
 import com.example.bookreader.widgets.CustomTextFiled
+import com.example.docreader.components.BookVerticalListCard
 
 @Composable
 fun SearchScreen(navController: NavController = rememberNavController()) {
@@ -80,7 +81,7 @@ fun SearchForm(searchViewModel: SearchViewModel = hiltViewModel()) {
         )
         Button(
             onClick = {
-                searchViewModel.getBookApiModel(searchState.value)
+                searchViewModel.getDocsApi(searchState.value)
             },
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             enabled = isSearchQueryValid.value
@@ -103,7 +104,7 @@ fun VerticalBookList(
 
     when (result) {
         is ResultState.Success -> {
-            val books = (result.data as BookApiModel).items
+            val books = (result.data as DocsApiModel).docs
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top,
@@ -112,8 +113,12 @@ fun VerticalBookList(
                     .padding(16.dp)
             ) {
                 items(books) {
-                    BookVerticalListCard(book = it, onClick = { bookId ->
-                        navController.navigate(ReaderScreens.DetailsScreen.name + "/" + bookId)
+                    BookVerticalListCard(doc = it, onClick = {
+                        navController.navigate(
+                            ReaderScreens.DetailsScreen.name + "/" + it.key.substringAfter(
+                                "/works/"
+                            ) + "/${it.author_name.joinToStringNullable()}/${it.number_of_pages_median}"
+                        )
                     })
                 }
             }
